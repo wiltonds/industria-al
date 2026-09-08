@@ -1,7 +1,16 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parent
+
+@st.cache_data
+def load_data():
+    arquivo = BASE_DIR / "industrias_ativas.xlsx"
+    return pd.read_excel(arquivo, sheet_name="Planilha1")
+
+df = load_data()
 # Configuração da página
 st.set_page_config(page_title="Painel de Indústrias de Alagoas", layout="wide")
 
