@@ -1,0 +1,66 @@
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+
+# Configuração da página
+st.set_page_config(page_title="Painel de Indústrias de Alagoas", layout="wide")
+
+st.title("📊 Painel Estatístico: Indústrias em Alagoas por Porte e Município")
+st.markdown("Esta aplicação interativa exibe a distribuição de indústrias ativas por município e porte.")
+
+# Carregar os dados
+@st.cache_data
+def load_data():
+    return pd.read_excel('industrias_ativas.xlsx', sheet_name='Planilha1')
+
+df = load_data()
+
+# Filtro lateral por Porte
+st.sidebar.header("Filtros")
+portes_disponiveis = df['Porte'].unique().tolist()
+porte_selecionado = st.sidebar.multiselect("Selecione o Porte:", portes_disponiveis, default=portes_disponiveis)
+
+# Filtrando o DataFrame
+df_filtrado = df[df['Porte'].isin(porte_selecionado)]
+
+# --- SEÇÃO DOS GRÁFICOS PRINCIPAIS ---
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("Top 15 Municípios com Mais Indústrias")
+    top_munis = df_filtrado['Municipio'].value_counts().head(15).reset_index()
+    top_munis.columns = ['Municipio', 'Quantidade']
+    
+    fig_bar = px.bar(
+        top_munis, 
+        x='Quantidade', 
+        y='Municipio', 
+        orientation='h',
+        text='Quantidade',
+        color='Quantidade',
+        color_continuous_scale='Viridis'
+    )
+    fig_bar.update_layout(yaxis={'categoryorder':'total ascending'})
+    st.plotly_chart(fig_bar, width='stretch')
+
+with col2:
+    st.subheader("Distribuição Geral por Porte")
+    porte_counts = df_filtrado['Porte'].value_counts().reset_index()
+    porte_counts.columns = ['Porte', 'Quantidade']
+    
+    fig_pie = px.pie(
+        porte_counts, 
+        names='Porte', 
+        values='Quantidade', 
+        hole=0.4,
+        color_discrete_sequence=px.colors.qualitative.Set2
+    )
+    st.plotly_chart(fig_pie, width='stretch')
+
+# --- TABELA DETALHADA ---
+st.subheader("📋 Tabela Resumo Consolidada por Município")
+tabela_resumo = pd.crosstab(df_filtrado['Municipio'], df_filtrado['Porte']).reset_index()
+tabela_resumo['Total'] = tabela_resumo.select_dtypes(include=['number']).sum(axis=1)
+tabela_resumo = tabela_resumo.sort_values(by='Total', ascending=False)
+
+st.dataframe(tabela_resumo, width='stretch')
