@@ -3,25 +3,31 @@ import pandas as pd
 import plotly.express as px
 from pathlib import Path
 
+# Configuração da página
+st.set_page_config(
+    page_title="Painel de Indústrias de Alagoas",
+    layout="wide"
+)
+
+# Pasta onde o app.py está localizado
 BASE_DIR = Path(__file__).resolve().parent
+
 
 @st.cache_data
 def load_data():
     arquivo = BASE_DIR / "industrias_ativas.xlsx"
-    return pd.read_excel(arquivo, sheet_name="Planilha1")
+    
+    if not arquivo.exists():
+        st.error(f"Arquivo não encontrado: {arquivo}")
+        st.stop()
+    
+    return pd.read_excel(
+        arquivo,
+        sheet_name="Planilha1"
+    )
 
-df = load_data()
-# Configuração da página
-st.set_page_config(page_title="Painel de Indústrias de Alagoas", layout="wide")
 
-st.title("📊 Painel Estatístico: Indústrias em Alagoas por Porte e Município")
-st.markdown("Esta aplicação interativa exibe a distribuição de indústrias ativas por município e porte.")
-
-# Carregar os dados
-@st.cache_data
-def load_data():
-    return pd.read_excel('industrias_ativas.xlsx', sheet_name='Planilha1')
-
+# Carregar dados
 df = load_data()
 
 # Filtro lateral por Porte
